@@ -474,8 +474,8 @@ body{font-size:16px;line-height:1.65}
  </div>
  <div class="producttoolbar"><button class="btn primary" onclick="newProduct()">+ เพิ่มสินค้า</button><button class="btn secondary" onclick="exportProducts()">สำรองข้อมูล</button><label class="btn secondary" style="cursor:pointer">นำเข้าข้อมูล<input type="file" id="importFile" accept="application/json" style="display:none"></label></div>
  <div id="productList" class="productlist"></div>
- <div class="productgroup"><h3>1. ข้อมูลพื้นฐานสินค้า</h3><div class="formgrid"><div class="field"><label>ชื่อสินค้า</label><input id="pName"></div><div class="field"><label>เลขสารบบอาหาร / เลข อย.</label><input id="pFda"></div></div></div>
- <div class="productgroup"><h3>2. เนื้อหาที่พนักงานต้องรู้</h3><div class="formgrid"><div class="field full"><label>ส่วนประกอบ (Ingredients) + ปริมาณ</label><textarea id="pIngredients"></textarea></div><div class="field"><label>วิธีรับประทาน (Directions)</label><textarea id="pDirections"></textarea></div><div class="field"><label>คำเตือน/ข้อควรระวัง (Warnings)</label><textarea id="pWarnings"></textarea></div><div class="field full"><label>ข้อความคุณประโยชน์ที่ได้รับอนุญาต (Approved Claims)</label><textarea id="pClaims"></textarea></div><div class="field"><label>กลุ่มที่บริษัทไม่ให้ขาย</label><textarea id="pExcluded"></textarea></div><div class="field"><label>คำห้ามพูดเฉพาะสินค้า</label><textarea id="pForbidden"></textarea></div></div></div>
+ <div class="productgroup"><h3>1. ข้อมูลพื้นฐานสินค้า</h3><div class="formgrid"><div class="field"><label>ชื่อสินค้า</label><input id="pName"></div><div class="field"><label>เลขสารบบอาหาร / เลข อย.</label><input id="pFda"></div><div class="field"><label>ขนาดบรรจุ (Pack size)</label><textarea id="pPack"></textarea></div><div class="field"><label>ช่องทางและโปรโมชั่นตามเอกสาร</label><textarea id="pSales"></textarea></div></div></div>
+ <div class="productgroup"><h3>2. เนื้อหาที่พนักงานต้องรู้</h3><div class="formgrid"><div class="field full"><label>ส่วนประกอบ (Ingredients) + ปริมาณ</label><textarea id="pIngredients" style="min-height:320px"></textarea></div><div class="field"><label>วิธีรับประทาน (Directions)</label><textarea id="pDirections"></textarea></div><div class="field"><label>คำเตือน/ข้อควรระวัง (Warnings)</label><textarea id="pWarnings" style="min-height:220px"></textarea></div><div class="field full"><label>ข้อความคุณประโยชน์ที่ได้รับอนุญาต (Approved Claims)</label><textarea id="pClaims"></textarea></div><div class="field"><label>กลุ่มที่บริษัทไม่ให้ขาย</label><textarea id="pExcluded" style="min-height:220px"></textarea></div><div class="field"><label>คำห้ามพูดเฉพาะสินค้า</label><textarea id="pForbidden" style="min-height:220px"></textarea></div><div class="field full"><label>ข้อความการขายใน PDF — รอตรวจสอบก่อนใช้</label><textarea id="pSourceCopy" style="min-height:250px"></textarea><span class="subtle">เก็บข้อความจากเอกสารต้นฉบับเพื่อให้ผู้รับผิดชอบตรวจสอบ ไม่ถือเป็นข้อความคุณประโยชน์ที่ได้รับอนุญาต และไม่ใช้ตอบลูกค้าอัตโนมัติ</span></div></div></div>
  <div class="productgroup"><h3>3. รูปสินค้าและฉลาก</h3><div class="imagebox"><div class="uploadbox"><b>รูปสินค้า</b><input id="productImageInput" type="file" accept="image/*"><div id="productImagePreview" class="emptyimg">ยังไม่มีรูปสินค้า</div></div><div class="uploadbox"><b>รูปฉลากสินค้า</b><input id="labelImageInput" type="file" accept="image/*"><div id="labelImagePreview" class="emptyimg">ยังไม่มีรูปฉลาก</div></div></div><div style="margin-top:12px"><button class="btn primary" onclick="saveCurrentProduct()">บันทึกสินค้า</button> <button class="btn danger" onclick="deleteCurrentProduct()">ลบสินค้านี้</button></div></div>
  <div class="note warn"><b>สำคัญ:</b> รูปจะถูกย่อก่อนเก็บในเบราว์เซอร์ (Browser) เครื่องนี้ ควรกด “สำรองข้อมูล” หลังอัปเดตสินค้า/ฉลากสำคัญ</div>
 </section>
@@ -596,13 +596,91 @@ function closeModal(){document.getElementById('modal').classList.remove('open')}
 function copyText(t){navigator.clipboard?.writeText(t);const x=document.getElementById('toast');x.style.display='block';setTimeout(()=>x.style.display='none',900)}
 
 // Product manager
+const PRODUCT_SEED_VERSION='2026-10-02-myco-prime-plus-v1';
+const DEFAULT_PRODUCTS=[{
+ id:'myco-prime-plus-6511136850004',
+ name:'ไมโค ไพรม์ พลัส (MYCO PRIME PLUS)',
+ fda:'65-1-11368-5-0004',
+ pack:'30 แคปซูล\nน้ำหนักสุทธิ 18 กรัม\nเฉลี่ย 0.6 กรัมต่อแคปซูล',
+ sales:'ช่องทางการจัดจำหน่ายตามเอกสาร: Facebook\nโปรโมชั่นรวม: 1 แถม 1 = 390 บาท, 2 แถม 2 = 690 บาท, 3 แถม 3 = 950 บาท\nโปรโมชั่นพิเศษ (อัพเซล): 2 แถม 2 = 650 บาท\nหมายเหตุ: ราคาและโปรโมชั่นเป็นข้อมูลจาก PDF ที่ได้รับเมื่อ 2 ต.ค. 2026 ควรตรวจสอบกับบริษัทก่อนแจ้งลูกค้า',
+ ingredients:`ส่วนประกอบสำคัญใน 1 แคปซูล
+สารสกัดจากแครนเบอร์รี่ (Cranberry Extract) 100.00 มก.
+สารสกัดจากเมล็ดองุ่น (Grape Seed Extract) 60.00 มก.
+สารสกัดจากชาเขียว (Green Tea Extract) 50.00 มก.
+ผงเห็ดหัวลิง (Lion's Mane Mushroom Powder) 25.00 มก.
+ผงเห็ดหลินจือ (Reishi Mushroom Powder) 25.00 มก.
+ผงเห็ดไมตาเกะ (Maitake Powder) 25.00 มก.
+ผงเห็ดหอม (Shiitake Powder) 25.00 มก.
+ผงถั่งเช่า (Cordyceps Powder) 25.00 มก.
+ผงเห็ดหูหนูขาว (White Jelly Mushroom Powder) 25.00 มก.
+ผงเห็ดนางรม (Oyster Mushroom Powder) 25.00 มก.
+ผงเห็ดหูหนูดำ (Jews Ear Mushroom Powder) 25.00 มก.
+ผงเชอร์รี่ทาร์ต (Tart Cherry Powder) 20.00 มก.
+สารสกัดจากขมิ้น (Turmeric Extract) 20.00 มก.
+สารสกัดจากมะขามป้อม (Indian Gooseberry Extract) 10.00 มก.
+สารสกัดจากสมอไทย (Chebulic Myrobalan Extract) 10.00 มก.
+สารสกัดจากสมอพิเภก (Belliric Myrobaran Extract) 10.00 มก.
+โคเอนไซม์คิวเท็น (Coenzyme Q10) 10.00 มก.
+นิโคตินาไมด์ (Nicotinamide) 10.00 มก.
+
+ส่วนประกอบที่ไม่สำคัญ (Inactive Ingredients)
+เจลาตินชนิดรับประทานได้ (Edible Gelatin, INS 428), สีสังเคราะห์ (Artificial Colour, INS 171)`,
+ directions:'ทานวันละ 1 เม็ด ก่อนอาหารมื้อไหนก็ได้',
+ warnings:`ข้อมูลสำหรับผู้แพ้อาหาร: ผลิตภัณฑ์นี้มีส่วนผสมของเห็ดและชาเขียว
+
+คำเตือนตามเอกสาร
+• เด็กและสตรีมีครรภ์ไม่ควรรับประทาน
+• ผู้มีโรคประจำตัวควรปรึกษาแพทย์ก่อน
+• ไม่มีผลในการป้องกันหรือรักษาโรค
+• ควรกินอาหารให้ครบ 5 หมู่`,
+ claims:'ยังไม่พบข้อความคุณประโยชน์ที่ระบุชัดว่า “ได้รับอนุญาต” ใน PDF ที่ส่งมา\n\nคำเตือนในเอกสารระบุว่า “ไม่มีผลในการป้องกันหรือรักษาโรค”\n\nก่อนใช้ข้อความคุณประโยชน์กับลูกค้า ให้ผู้รับผิดชอบด้านกฎหมาย/กำกับดูแลยืนยันจากฉลากหรือเอกสารที่ได้รับอนุญาตก่อน',
+ excluded:`โรคที่ไม่แนะนำตามเอกสาร
+• โรคหัวใจทุกชนิด เช่น หัวใจเต้นผิดจังหวะ หัวใจโต หัวใจรั่ว และโรคหลอดเลือดหัวใจ
+• โรคหลอดเลือดสมองแตก/ตีบ
+• ผู้ที่ทานยาละลายลิ่มเลือด
+• ผู้ที่ใช้วาร์ฟาริน (Warfarin)
+• ผู้ที่ใช้แอสไพริน (Aspirin)
+• ผู้ที่ใช้โคลพิโดเกรล (Clopidogrel)
+• โรคเอสแอลอี (SLE)`,
+ forbidden:`ตามกฎความปลอดภัยของทีม ห้ามนำข้อความต่อไปนี้จากเอกสารการขายไปใช้กับลูกค้าจนกว่าจะมีเอกสารยืนยันว่าได้รับอนุญาต:
+• ฟื้นฟูไต / ฟื้นฟูถึงระดับเซลล์
+• ค่าไตดีขึ้น หรือรับประกันผลตรวจ
+• ลดความเสี่ยงไตเสื่อม/ไตวาย
+• ไม่ต้องฟอกไต หรือลด/หยุดการฟอกไต
+• เห็นผลภายใน 7–14 วัน
+• ไม่มีผลข้างเคียงแน่นอน
+• ผู้ฟอกไตหรือโรคไตระยะ 1–5 ทานได้
+• ป้องกันหรือรักษาโรค`,
+ sourceCopy:`ข้อความที่พบใน PDF และรอตรวจสอบกับผู้รับผิดชอบก่อนใช้
+• “บำรุงและฟื้นฟูการทำงานของไต”
+• “ช่วยปรับสมดุลการขับของเสียทางปัสสาวะ”
+• “ลดความเสี่ยงภาวะไตเสื่อม”
+• “ช่วยให้ค่าการทำงานของไตดีขึ้น”
+• “ลดอาการฉี่ผิดปกติ เช่น ฉี่มีฟอง สีเข้ม”
+• “เสริมการดีท็อกของเสียในร่างกาย”
+• “ลดอาการบวม แน่นตัว กดแล้วบุ๋ม”
+• “บรรเทาปวดเอว ปวดชายโครง”
+• “กักเก็บโปรตีน ช่วยเรื่องโปรตีนรั่ว”
+
+ในส่วน Q&A ของ PDF ยังมีข้อความว่าเห็นผลภายใน 7–14 วัน, ผู้ฟอกไตทานได้, ผู้ป่วยไตระยะ 1–5 ทานได้, ค่าไตดีขึ้น และไม่มีผลข้างเคียงแน่นอน ซึ่งขัดกับคำเตือน “ไม่มีผลในการป้องกันหรือรักษาโรค” และกฎทีมเดิม จึงไม่นำไปใช้เป็นคำตอบลูกค้าอัตโนมัติ`,
+ productImage:'assets/myco-prime-plus-product.jpg',
+ labelImage:'assets/myco-prime-plus-ingredients.jpg'
+}];
 let products=[];let currentProductId=null;let tempProductImage='';let tempLabelImage='';
-function loadProducts(){try{products=JSON.parse(localStorage.getItem('kidney_products_v4')||'[]')}catch(e){products=[]}renderProductList();if(products.length)selectProduct(products[0].id);else newProduct()}
+function loadProducts(){
+ let saved=[];try{const parsed=JSON.parse(localStorage.getItem('kidney_products_v4')||'[]');saved=Array.isArray(parsed)?parsed:[]}catch(e){saved=[]}
+ products=saved;
+ if(localStorage.getItem('kidney_products_seed_version')!==PRODUCT_SEED_VERSION){
+  DEFAULT_PRODUCTS.forEach(defaultProduct=>{if(!products.some(p=>p.id===defaultProduct.id||p.fda===defaultProduct.fda))products.push({...defaultProduct})});
+  localStorage.setItem('kidney_products_seed_version',PRODUCT_SEED_VERSION);persistProducts();
+ }
+ renderProductList();if(products.length)selectProduct(products[0].id);else newProduct()
+}
 function persistProducts(){localStorage.setItem('kidney_products_v4',JSON.stringify(products))}
-function newProduct(){currentProductId=null;tempProductImage='';tempLabelImage='';['pName','pFda','pIngredients','pDirections','pWarnings','pClaims','pExcluded','pForbidden'].forEach(id=>document.getElementById(id).value='');renderImg('productImagePreview','');renderImg('labelImagePreview','');document.querySelectorAll('.productitem').forEach(x=>x.classList.remove('active'))}
-function getFormProduct(){const v=id=>document.getElementById(id).value;return {id:currentProductId||('p_'+Date.now()),name:v('pName').trim(),fda:v('pFda').trim(),ingredients:v('pIngredients'),directions:v('pDirections'),warnings:v('pWarnings'),claims:v('pClaims'),excluded:v('pExcluded'),forbidden:v('pForbidden'),productImage:tempProductImage,labelImage:tempLabelImage}}
+function newProduct(){currentProductId=null;tempProductImage='';tempLabelImage='';['pName','pFda','pPack','pSales','pIngredients','pDirections','pWarnings','pClaims','pExcluded','pForbidden','pSourceCopy'].forEach(id=>document.getElementById(id).value='');renderImg('productImagePreview','');renderImg('labelImagePreview','');document.querySelectorAll('.productitem').forEach(x=>x.classList.remove('active'))}
+function getFormProduct(){const v=id=>document.getElementById(id).value;return {id:currentProductId||('p_'+Date.now()),name:v('pName').trim(),fda:v('pFda').trim(),pack:v('pPack'),sales:v('pSales'),ingredients:v('pIngredients'),directions:v('pDirections'),warnings:v('pWarnings'),claims:v('pClaims'),excluded:v('pExcluded'),forbidden:v('pForbidden'),sourceCopy:v('pSourceCopy'),productImage:tempProductImage,labelImage:tempLabelImage}}
 function saveCurrentProduct(){const p=getFormProduct();if(!p.name){alert('กรุณาใส่ชื่อสินค้า');return}const idx=products.findIndex(x=>x.id===p.id);if(idx>=0)products[idx]=p;else products.push(p);currentProductId=p.id;persistProducts();renderProductList();selectProduct(p.id)}
-function selectProduct(id){const p=products.find(x=>x.id===id);if(!p)return;currentProductId=id;const set=(id,val)=>document.getElementById(id).value=val||'';set('pName',p.name);set('pFda',p.fda);set('pIngredients',p.ingredients);set('pDirections',p.directions);set('pWarnings',p.warnings);set('pClaims',p.claims);set('pExcluded',p.excluded);set('pForbidden',p.forbidden);tempProductImage=p.productImage||'';tempLabelImage=p.labelImage||'';renderImg('productImagePreview',tempProductImage);renderImg('labelImagePreview',tempLabelImage);renderProductList()}
+function selectProduct(id){const p=products.find(x=>x.id===id);if(!p)return;currentProductId=id;const set=(id,val)=>document.getElementById(id).value=val||'';set('pName',p.name);set('pFda',p.fda);set('pPack',p.pack);set('pSales',p.sales);set('pIngredients',p.ingredients);set('pDirections',p.directions);set('pWarnings',p.warnings);set('pClaims',p.claims);set('pExcluded',p.excluded);set('pForbidden',p.forbidden);set('pSourceCopy',p.sourceCopy);tempProductImage=p.productImage||'';tempLabelImage=p.labelImage||'';renderImg('productImagePreview',tempProductImage);renderImg('labelImagePreview',tempLabelImage);renderProductList()}
 function deleteCurrentProduct(){if(!currentProductId)return;if(!confirm('ลบสินค้านี้หรือไม่?'))return;products=products.filter(x=>x.id!==currentProductId);persistProducts();renderProductList();if(products.length)selectProduct(products[0].id);else newProduct()}
 function renderProductList(){const e=document.getElementById('productList');if(!products.length){e.innerHTML='<div class="subtle">ยังไม่มีสินค้า กด “เพิ่มสินค้า” เพื่อเริ่มกรอกข้อมูล</div>';return}e.innerHTML=products.map(p=>`<div class="productitem ${p.id===currentProductId?'active':''}" onclick="selectProduct('${p.id}')">${p.productImage?`<img src="${p.productImage}">`:'<div class="emptyimg" style="height:110px">ไม่มีรูป</div>'}<b>${p.name||'ยังไม่ตั้งชื่อ'}</b><span class="subtle">${p.fda?'อย. '+p.fda:''}</span></div>`).join('')}
 function renderImg(id,src){const e=document.getElementById(id);e.className=src?'':'emptyimg';e.innerHTML=src?`<img src="${src}" style="width:100%;height:180px;object-fit:contain;border-radius:8px">`:(id==='productImagePreview'?'ยังไม่มีรูปสินค้า':'ยังไม่มีรูปฉลาก')}
@@ -618,7 +696,8 @@ function normalizeSearchTerm(value){return value.trim().toLowerCase().replaceAll
 document.getElementById('searchInput').oninput=()=>{
   const input=document.getElementById('searchInput');const box=document.getElementById('searchResults');const q=normalizeSearchTerm(input.value);
   if(!q){box.classList.remove('open');box.innerHTML='';return}
-  let out=searchIndex.filter(x=>normalizeSearchTerm(x.title+' '+x.text).includes(q));
+  const productIndex=products.map(p=>({title:p.name||'สินค้า',text:[p.fda,p.pack,p.sales,p.ingredients,p.directions,p.warnings,p.claims,p.excluded,p.forbidden,p.sourceCopy].filter(Boolean).join(' '),page:'products'}));
+  let out=[...searchIndex,...productIndex].filter(x=>normalizeSearchTerm(x.title+' '+x.text).includes(q));
   if(/^ค่าไต\s*[0-9.]+$/.test(q)){out=[searchIndex.find(x=>x.title.includes('ค่าไต 50')),...out].filter(Boolean)}
   out=[...new Map(out.map(x=>[x.title+'|'+x.page,x])).values()].slice(0,12);
   box.innerHTML=out.length?out.map(x=>`<button type="button" class="sitem" data-page="${x.page}"><b>${x.title}</b><small>${x.text.slice(0,120)}${x.text.length>120?'…':''}</small></button>`).join(''):'<div class="sitem">ไม่พบข้อมูล ลองใช้คำสั้นลง</div>';
